@@ -1,0 +1,64 @@
+# server 是唯一常驻进程，client 是一次性任务。
+# 两者只走名为 app 的内部网络，用服务名访问，不把端口发布到宿主机。
+name: banner-fingerprint
+
+networks:
+  app:
+    internal: true
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: server
+    image: banner-fingerprint-server:local
+    environment:
+      LISTEN_ADDR: ":8080"
+      RULES_PATH: /rules/fingerprints.json
+    networks:
+      - app
+    expose:
+      - "8080"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "65532:65532"
+    pids_limit: 128
+    mem_limit: 128m
+    healthcheck:
+      test: ["/server", "healthcheck"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+      start_period: 2s
+    restart: unless-stopped
+    stop_grace_period: 10s
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: client
+    image: banner-fingerprint-client:local
+    environment:
+      FINGERPRINT_SERVER: http://server:8080
+      FINGERPRINT_INPUT: /data/sample.json
+    networks:
+      - app
+    depends_on:
+      server:
+        condition: service_healthy
+    volumes:
+      - ./testdata:/data:ro
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "65532:65532"
+    pids_limit: 64
+    mem_limit: 64m
+    restart: "no"

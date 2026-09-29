@@ -1,0 +1,391 @@
+{
+  "schema_version": 1,
+  "os_aliases": {
+    "ubuntu": "Ubuntu",
+    "debian": "Debian",
+    "centos": "CentOS",
+    "rhel": "RHEL",
+    "redhat": "RedHat",
+    "windows": "Windows",
+    "win64": "Windows",
+    "win32": "Windows",
+    "unix": "Unix",
+    "linux": "Linux",
+    "freebsd": "FreeBSD",
+    "alpine": "Alpine"
+  },
+  "rules": [
+    {
+      "id": "openssh-windows",
+      "description": "OpenSSH for Windows",
+      "priority": 110,
+      "pattern": "SSH-[0-9.]+-OpenSSH_for_Windows_([0-9][A-Za-z0-9.]*)",
+      "protocol": "SSH",
+      "product": "OpenSSH",
+      "version_group": 1,
+      "os_hint": "Windows",
+      "confidence": 0.95
+    },
+    {
+      "id": "openssh-os",
+      "description": "OpenSSH，版本后带发行版，例如 Ubuntu-3、Debian-1",
+      "priority": 100,
+      "pattern": "SSH-[0-9.]+-OpenSSH_([0-9][A-Za-z0-9.]*)\\s+([A-Za-z]+)",
+      "protocol": "SSH",
+      "product": "OpenSSH",
+      "version_group": 1,
+      "os_hint_group": 2,
+      "confidence": 0.95
+    },
+    {
+      "id": "openssh",
+      "description": "OpenSSH，banner 里只有版本",
+      "priority": 90,
+      "pattern": "SSH-[0-9.]+-OpenSSH_([0-9][A-Za-z0-9.]*)",
+      "protocol": "SSH",
+      "product": "OpenSSH",
+      "version_group": 1,
+      "confidence": 0.9
+    },
+    {
+      "id": "dropbear",
+      "description": "Dropbear SSH",
+      "priority": 90,
+      "pattern": "(?i)SSH-[0-9.]+-dropbear_([0-9][0-9.]*)",
+      "protocol": "SSH",
+      "product": "Dropbear",
+      "version_group": 1,
+      "confidence": 0.9
+    },
+    {
+      "id": "libssh",
+      "description": "libssh",
+      "priority": 85,
+      "pattern": "(?i)SSH-[0-9.]+-libssh[_-]([0-9][0-9.]*)",
+      "protocol": "SSH",
+      "product": "libssh",
+      "version_group": 1,
+      "confidence": 0.85
+    },
+    {
+      "id": "ssh-protocol",
+      "description": "能看出是 SSH，但软件不在已知列表里",
+      "priority": 30,
+      "pattern": "SSH-[0-9.]+-",
+      "protocol": "SSH",
+      "confidence": 0.5
+    },
+    {
+      "id": "nginx",
+      "description": "nginx，可选括号里的系统名",
+      "priority": 100,
+      "pattern": "(?i)Server:\\s*nginx/([0-9]+(?:\\.[0-9]+)*)(?:\\s+\\(([A-Za-z0-9]+)[^)]*\\))?",
+      "protocol": "HTTP",
+      "product": "nginx",
+      "version_group": 1,
+      "os_hint_group": 2,
+      "confidence": 0.9
+    },
+    {
+      "id": "nginx-no-version",
+      "description": "nginx，没有版本号",
+      "priority": 70,
+      "pattern": "(?i)Server:\\s*nginx\\b",
+      "protocol": "HTTP",
+      "product": "nginx",
+      "confidence": 0.7
+    },
+    {
+      "id": "apache",
+      "description": "Apache HTTP Server，产品名按示例写作 Apache",
+      "priority": 100,
+      "pattern": "(?i)Server:\\s*Apache/([0-9]+(?:\\.[0-9]+)*)(?:\\s+\\(([A-Za-z0-9]+)[^)]*\\))?",
+      "protocol": "HTTP",
+      "product": "Apache",
+      "version_group": 1,
+      "os_hint_group": 2,
+      "confidence": 0.9
+    },
+    {
+      "id": "apache-no-version",
+      "description": "Apache，没有版本号",
+      "priority": 70,
+      "pattern": "(?i)Server:\\s*Apache\\b",
+      "protocol": "HTTP",
+      "product": "Apache",
+      "confidence": 0.7
+    },
+    {
+      "id": "jetty",
+      "description": "Jetty，兼容 Jetty/9.4.51 和 Jetty(9.4.51.v...) 两种写法",
+      "priority": 100,
+      "pattern": "(?i)Server:\\s*Jetty(?:/|\\()([0-9][^\\s)]*)",
+      "protocol": "HTTP",
+      "product": "Jetty",
+      "version_group": 1,
+      "confidence": 0.85
+    },
+    {
+      "id": "jetty-no-version",
+      "description": "Jetty，没有版本号",
+      "priority": 70,
+      "pattern": "(?i)Server:\\s*Jetty\\b",
+      "protocol": "HTTP",
+      "product": "Jetty",
+      "confidence": 0.7
+    },
+    {
+      "id": "tomcat",
+      "description": "Apache Tomcat",
+      "priority": 95,
+      "pattern": "(?i)Server:\\s*(?:Apache\\s+)?Tomcat/([0-9]+(?:\\.[0-9]+)*)",
+      "protocol": "HTTP",
+      "product": "Apache Tomcat",
+      "version_group": 1,
+      "confidence": 0.9
+    },
+    {
+      "id": "apache-coyote",
+      "description": "Tomcat 连接器 Apache-Coyote，看不到 Tomcat 版本",
+      "priority": 70,
+      "pattern": "(?i)Apache-Coyote/",
+      "protocol": "HTTP",
+      "product": "Apache Tomcat",
+      "confidence": 0.7
+    },
+    {
+      "id": "microsoft-iis",
+      "description": "Microsoft IIS",
+      "priority": 90,
+      "pattern": "(?i)Server:\\s*Microsoft-IIS/([0-9]+(?:\\.[0-9]+)*)",
+      "protocol": "HTTP",
+      "product": "Microsoft-IIS",
+      "version_group": 1,
+      "confidence": 0.9
+    },
+    {
+      "id": "http-server-generic",
+      "description": "有 HTTP 状态行和 Server 头，但没有更具体的产品规则",
+      "priority": 30,
+      "pattern": "(?is)HTTP/\\d(?:\\.\\d)?\\s+\\d{3}.*?Server:\\s*([A-Za-z][A-Za-z0-9._+-]*)(?:/([^\\s\\r\\n]+))?",
+      "protocol": "HTTP",
+      "product_group": 1,
+      "version_group": 2,
+      "confidence": 0.6
+    },
+    {
+      "id": "http2-preface",
+      "description": "HTTP/2 连接前言",
+      "priority": 25,
+      "pattern": "PRI \\* HTTP/2\\.0",
+      "protocol": "HTTP",
+      "confidence": 0.5
+    },
+    {
+      "id": "http-status",
+      "description": "只有 HTTP 状态行，没有 Server 头",
+      "priority": 20,
+      "pattern": "(?i)HTTP/\\d(?:\\.\\d)?\\s+\\d{3}\\b",
+      "protocol": "HTTP",
+      "confidence": 0.45
+    },
+    {
+      "id": "mariadb",
+      "description": "MariaDB 走 MySQL 协议，产品记为 MariaDB",
+      "priority": 110,
+      "pattern": "(?i)([0-9]+\\.[0-9]+\\.[0-9]+)-MariaDB",
+      "protocol": "MySQL",
+      "product": "MariaDB",
+      "version_group": 1,
+      "confidence": 0.9
+    },
+    {
+      "id": "mysql-greeting-os",
+      "description": "MySQL 握手包，版本后缀里带发行版名",
+      "priority": 105,
+      "pattern": "(?i)\\x0a([0-9]+\\.[0-9]+\\.[0-9]+)-[^\\x00\\r\\n]{0,80}?(ubuntu|debian|centos|rhel|windows)",
+      "protocol": "MySQL",
+      "product": "MySQL",
+      "version_group": 1,
+      "os_hint_group": 2,
+      "confidence": 0.95
+    },
+    {
+      "id": "mysql-greeting",
+      "description": "MySQL 握手包：协议版本字节 0x0a 后跟以空字节结尾的版本串",
+      "priority": 100,
+      "pattern": "\\x0a([0-9]+\\.[0-9]+\\.[0-9]+)(?:-[0-9A-Za-z.+]+)*\\x00",
+      "protocol": "MySQL",
+      "product": "MySQL",
+      "version_group": 1,
+      "confidence": 0.9
+    },
+    {
+      "id": "mysql-error-text",
+      "description": "MySQL 文本错误，看不到版本",
+      "priority": 70,
+      "pattern": "(?i)(?:mysql_native_password|caching_sha2_password|Got packets out of order|is not allowed to connect to this MySQL server)",
+      "protocol": "MySQL",
+      "product": "MySQL",
+      "confidence": 0.7
+    },
+    {
+      "id": "redis-version",
+      "description": "Redis INFO 里的 redis_version",
+      "priority": 100,
+      "pattern": "(?i)redis_version:\\s*([0-9][^\\r\\n\\s]*)",
+      "protocol": "Redis",
+      "product": "Redis",
+      "version_group": 1,
+      "confidence": 0.9
+    },
+    {
+      "id": "redis-pong",
+      "description": "Redis PING 的 +PONG，没有版本",
+      "priority": 80,
+      "pattern": "(?m)(?:^|\\n)\\+PONG\\b",
+      "protocol": "Redis",
+      "product": "Redis",
+      "confidence": 0.7
+    },
+    {
+      "id": "redis-noauth",
+      "description": "Redis 未认证",
+      "priority": 80,
+      "pattern": "(?i)-NOAUTH Authentication required",
+      "protocol": "Redis",
+      "product": "Redis",
+      "confidence": 0.7
+    },
+    {
+      "id": "redis-err-args",
+      "description": "Redis 参数个数错误",
+      "priority": 80,
+      "pattern": "(?i)-ERR wrong number of arguments",
+      "protocol": "Redis",
+      "product": "Redis",
+      "confidence": 0.7
+    },
+    {
+      "id": "redis-unknown-command",
+      "description": "Redis 未知命令",
+      "priority": 80,
+      "pattern": "(?i)-ERR unknown command",
+      "protocol": "Redis",
+      "product": "Redis",
+      "confidence": 0.7
+    },
+    {
+      "id": "redis-wrongpass",
+      "description": "Redis 密码错误",
+      "priority": 80,
+      "pattern": "(?i)-WRONGPASS\\b",
+      "protocol": "Redis",
+      "product": "Redis",
+      "confidence": 0.7
+    },
+    {
+      "id": "proftpd-os",
+      "description": "ProFTPD，括号里是发行版而不是软件名自己",
+      "priority": 110,
+      "pattern": "(?i)ProFTPD\\s+([0-9]+\\.[0-9]+\\.[0-9]+).{0,80}\\((Debian|Ubuntu|CentOS|RHEL|Windows)\\)",
+      "protocol": "FTP",
+      "product": "ProFTPD",
+      "version_group": 1,
+      "os_hint_group": 2,
+      "confidence": 0.95
+    },
+    {
+      "id": "proftpd",
+      "description": "ProFTPD",
+      "priority": 100,
+      "pattern": "(?i)ProFTPD\\s+([0-9]+\\.[0-9]+\\.[0-9]+)",
+      "protocol": "FTP",
+      "product": "ProFTPD",
+      "version_group": 1,
+      "confidence": 0.9
+    },
+    {
+      "id": "vsftpd",
+      "description": "vsftpd",
+      "priority": 100,
+      "pattern": "(?i)vsFTPd\\s+([0-9]+\\.[0-9]+\\.[0-9]+)",
+      "protocol": "FTP",
+      "product": "vsftpd",
+      "version_group": 1,
+      "confidence": 0.9
+    },
+    {
+      "id": "pure-ftpd-version",
+      "description": "Pure-FTPd，带版本",
+      "priority": 100,
+      "pattern": "(?i)Pure-FTPd\\s+([0-9]+\\.[0-9]+\\.[0-9]+)",
+      "protocol": "FTP",
+      "product": "Pure-FTPd",
+      "version_group": 1,
+      "confidence": 0.9
+    },
+    {
+      "id": "pure-ftpd",
+      "description": "Pure-FTPd，欢迎语里没有版本",
+      "priority": 80,
+      "pattern": "(?i)Pure-FTPd",
+      "protocol": "FTP",
+      "product": "Pure-FTPd",
+      "confidence": 0.75
+    },
+    {
+      "id": "filezilla",
+      "description": "FileZilla Server",
+      "priority": 90,
+      "pattern": "(?i)FileZilla Server(?:\\s+([0-9]+\\.[0-9]+(?:\\.[0-9]+)?))?",
+      "protocol": "FTP",
+      "product": "FileZilla Server",
+      "version_group": 1,
+      "confidence": 0.85
+    },
+    {
+      "id": "microsoft-ftp",
+      "description": "Microsoft FTP Service",
+      "priority": 85,
+      "pattern": "(?i)Microsoft FTP Service",
+      "protocol": "FTP",
+      "product": "Microsoft FTP Service",
+      "confidence": 0.85
+    },
+    {
+      "id": "smtp-product",
+      "description": "SMTP 220 欢迎语里带常见 MTA 名称",
+      "priority": 80,
+      "pattern": "(?i)^220[- ].*\\b(Postfix|Exim|Sendmail|Haraka)\\b",
+      "protocol": "SMTP",
+      "product_group": 1,
+      "confidence": 0.85
+    },
+    {
+      "id": "smtp-esmtp",
+      "description": "SMTP，只能确认 ESMTP",
+      "priority": 60,
+      "pattern": "(?i)^220[- ].*\\bESMTP\\b",
+      "protocol": "SMTP",
+      "confidence": 0.7
+    },
+    {
+      "id": "rdp",
+      "description": "RDP Cookie",
+      "priority": 70,
+      "pattern": "(?i)Cookie:\\s*mstshash=",
+      "protocol": "RDP",
+      "product": "Microsoft Terminal Services",
+      "confidence": 0.85
+    },
+    {
+      "id": "tls-record",
+      "description": "TLS 记录头。ClientHello 常见以 16 03 01 开头，看不到证书里的软件名",
+      "priority": 40,
+      "pattern": "\\x16\\x03[\\x00-\\x04]",
+      "protocol": "TLS",
+      "confidence": 0.6
+    }
+  ]
+}
