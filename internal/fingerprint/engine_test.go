@@ -178,7 +178,7 @@ var sampleExpected = []Result{
 	{IP: "1.2.3.13", Port: 443, Protocol: "HTTP", Product: "Apache", Version: "2.4.41", OSHint: "Ubuntu", Confidence: 0.9},
 	{IP: "1.2.3.14", Port: 3306, Protocol: "MySQL", Product: "MySQL", Version: "5.7.42", OSHint: "", Confidence: 0.9},
 	{IP: "1.2.3.15", Port: 6379, Protocol: "Redis", Product: "Redis", Version: "", OSHint: "", Confidence: 0.7},
-	{IP: "1.2.3.16", Port: 21, Protocol: "FTP", Product: "vsftpd", Version: "3.0.5", OSHint: "", Confidence: 0.9},
+	{IP: "1.2.3.16", Port: 21, Protocol: "FTP", Product: "vsFTPd", Version: "3.0.5", OSHint: "", Confidence: 0.9},
 	{IP: "1.2.3.17", Port: 8443, Protocol: "HTTP", Product: "nginx", Version: "1.25.3", OSHint: "", Confidence: 0.9},
 	{IP: "1.2.3.18", Port: 22, Protocol: "SSH", Product: "OpenSSH", Version: "4.3", OSHint: "", Confidence: 0.9},
 	{IP: "1.2.3.19", Port: 9999, Protocol: "TLS", Product: "", Version: "", OSHint: "", Confidence: 0.6},

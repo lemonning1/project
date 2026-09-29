@@ -88,16 +88,42 @@ func TestBadItemDoesNotFailBatch(t *testing.T) {
 	}
 }
 
-func TestRejectNonArray(t *testing.T) {
+func TestAnyInputReturns200(t *testing.T) {
 	engine, err := fingerprint.Load(filepath.Join("..", "..", "rules", "fingerprints.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	req := httptest.NewRequest(http.MethodPost, "/fingerprint", bytes.NewBufferString(`{"ip":"1.1.1.1"}`))
+	handler := Handler(engine)
+	cases := []string{
+		`{"ip":"1.1.1.1","port":22,"banner":"QUIT\r\n"}`,
+		`not-json`,
+		``,
+		`null`,
+		`123`,
+		`{"ip":`,
+	}
+	for _, body := range cases {
+		req := httptest.NewRequest(http.MethodPost, "/fingerprint", bytes.NewBufferString(body))
+		resp := httptest.NewRecorder()
+		handler.ServeHTTP(resp, req)
+		if resp.Code != http.StatusOK {
+			t.Fatalf("body %q status=%d resp=%s", body, resp.Code, resp.Body.String())
+		}
+		var results []fingerprint.Result
+		if err := json.Unmarshal(resp.Body.Bytes(), &results); err != nil {
+			t.Fatalf("body %q 不是 JSON 数组: %s", body, resp.Body.String())
+		}
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/fingerprint", bytes.NewBufferString(`{"ip":"1.1.1.1","port":22,"banner":"SSH-2.0-OpenSSH_8.9p1 Ubuntu-3"}`))
 	resp := httptest.NewRecorder()
-	Handler(engine).ServeHTTP(resp, req)
-	if resp.Code != http.StatusBadRequest {
-		t.Fatalf("status=%d", resp.Code)
+	handler.ServeHTTP(resp, req)
+	var one []fingerprint.Result
+	if err := json.Unmarshal(resp.Body.Bytes(), &one); err != nil {
+		t.Fatal(err)
+	}
+	if len(one) != 1 || one[0].Version != "8.9p1" || one[0].OSHint != "Ubuntu" {
+		t.Fatalf("single object = %+v", one)
 	}
 }
 

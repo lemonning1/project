@@ -1,10 +1,10 @@
 // Package httpapi 提供指纹服务的 HTTP 接口。
-// 识别失败写入 unknown 结果；只有请求本身不合法时才返回 4xx。
+// /fingerprint 对任何请求体都返回 200：认不出或解析不了的记录变成 unknown，空结果是 []。
 package httpapi
 
 import (
+	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -50,61 +50,73 @@ func health(engine *fingerprint.Engine) http.HandlerFunc {
 
 func fingerprintHandler(engine *fingerprint.Engine) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if engine == nil || engine.Len() == 0 {
-			writeJSON(w, http.StatusServiceUnavailable, map[string]string{
-				"error": "规则尚未加载",
-			})
-			return
-		}
-		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxBody))
-		if err != nil {
-			var maxErr *http.MaxBytesError
-			if errors.As(err, &maxErr) {
-				writeJSON(w, http.StatusRequestEntityTooLarge, map[string]string{
-					"error": "请求体过大",
-				})
-				return
-			}
-			writeJSON(w, http.StatusBadRequest, map[string]string{
-				"error": "读取请求体失败",
-			})
-			return
-		}
-
-		var raws []json.RawMessage
-		if err := json.Unmarshal(body, &raws); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{
-				"error": "请求体必须是 JSON 数组",
-			})
-			return
-		}
-		if len(raws) > maxItems {
-			writeJSON(w, http.StatusBadRequest, map[string]string{
-				"error": fmt.Sprintf("单次最多提交 %d 条", maxItems),
-			})
-			return
-		}
-
-		items := make([]fingerprint.Input, len(raws))
-		bad := make([]bool, len(raws))
-		for i, raw := range raws {
-			if string(raw) == "null" {
-				bad[i] = true
-				continue
-			}
-			if err := json.Unmarshal(raw, &items[i]); err != nil {
-				bad[i] = true
-			}
-		}
-
-		results := engine.IdentifyBatch(items)
-		for i := range results {
-			if bad[i] {
-				results[i] = fingerprint.Unknown(items[i])
-			}
-		}
-		writeJSON(w, http.StatusOK, results)
+		writeJSON(w, http.StatusOK, identifyRequest(engine, r))
 	}
+}
+
+// identifyRequest 保证不把解析失败变成非 200。调用方拿到的切片始终非 nil。
+func identifyRequest(engine *fingerprint.Engine, r *http.Request) (results []fingerprint.Result) {
+	results = []fingerprint.Result{}
+	defer func() {
+		if recover() != nil {
+			results = []fingerprint.Result{}
+		}
+	}()
+	if r == nil || r.Body == nil || engine == nil || engine.Len() == 0 {
+		return results
+	}
+	body, err := io.ReadAll(io.LimitReader(r.Body, maxBody+1))
+	if err != nil || int64(len(body)) > maxBody {
+		return results
+	}
+	body = bytes.TrimSpace(body)
+	if len(body) == 0 {
+		return results
+	}
+
+	switch body[0] {
+	case '[':
+		return identifyArray(engine, body)
+	case '{':
+		var item fingerprint.Input
+		if err := json.Unmarshal(body, &item); err != nil {
+			return results
+		}
+		return engine.IdentifyBatch([]fingerprint.Input{item})
+	default:
+		return results
+	}
+}
+
+func identifyArray(engine *fingerprint.Engine, body []byte) []fingerprint.Result {
+	var raws []json.RawMessage
+	if err := json.Unmarshal(body, &raws); err != nil {
+		return []fingerprint.Result{}
+	}
+	if len(raws) > maxItems {
+		raws = raws[:maxItems]
+	}
+	items := make([]fingerprint.Input, len(raws))
+	bad := make([]bool, len(raws))
+	for i, raw := range raws {
+		if len(bytes.TrimSpace(raw)) == 0 || bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
+			bad[i] = true
+			continue
+		}
+		if err := json.Unmarshal(raw, &items[i]); err != nil {
+			bad[i] = true
+		}
+	}
+	results := engine.IdentifyBatch(items)
+	if results == nil {
+		results = []fingerprint.Result{}
+	}
+	for i := range results {
+		if bad[i] {
+			results[i] = fingerprint.Unknown(items[i])
+		}
+	}
+	return results
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

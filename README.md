@@ -39,29 +39,36 @@
 
 ## 启动
 
-在仓库根目录执行：
+在仓库根目录：
 
 ```bash
 docker compose up --build
+docker compose ps
 ```
 
-server 通过健康检查后，client 才会读取 `/data/sample.json` 并打印结果。client 退出码为 0 后，server 继续运行。看完日志可以 `Ctrl+C`，或在另一个终端执行 `docker compose stop`。
+server 的健康检查通过后，client 读取 `/data/input.json`（来自 [`testdata/input.json`](testdata/input.json)）并把 JSON 数组打到日志。client 退出后 server 继续运行。看完可以 `docker compose stop`。
 
-只看识别结果、不把 server 日志混在一起：
+只看识别结果：
 
 ```bash
 docker compose up -d --build
 docker compose run --rm client
 ```
 
-用自己的验收文件（内容仍是 JSON 数组）：
+换一份验收文件：
 
 ```bash
-docker compose up -d --build
 docker compose run --rm -v /绝对路径/accept.json:/data/accept.json:ro -e FINGERPRINT_INPUT=/data/accept.json client
 ```
 
-Windows PowerShell 把 `/绝对路径/accept.json` 换成本机路径即可。`testdata` 目录已经挂到容器的 `/data`，也可以直接替换 [`testdata/sample.json`](testdata/sample.json) 后再执行 `docker compose run --rm client`。
+不使用 Docker 时，在仓库根目录开两个终端：
+
+```bash
+go run ./cmd/server
+go run ./cmd/client -input testdata/input.json -server http://127.0.0.1:8080
+```
+
+client 把 JSON 打到标准输出，把「共几条、未知几条」打到标准错误。结果里含有 `unknown` 时退出码仍是 0。文件读不到或服务连不上时退出码是 2。
 
 ## 接口
 
@@ -75,7 +82,7 @@ Windows PowerShell 把 `/绝对路径/accept.json` 换成本机路径即可。`t
 ]
 ```
 
-响应是等长数组。某一条字段类型不对，这一条变成 `unknown`，其余照常返回。整个请求体不是 JSON 数组时返回 400。空 banner、无法识别的 banner 都返回 200，协议为 `unknown`。
+响应是等长数组，HTTP 状态码始终是 200。某一条字段类型不对，这一条变成 `unknown`。请求体不是 JSON 数组或对象、空 body、超大 body，都返回 200 和 `[]`。单个 JSON 对象会按一条记录识别。空 banner、无法识别的 banner 协议为 `unknown`。
 
 `GET /health`
 
@@ -118,7 +125,7 @@ Windows PowerShell 把 `/绝对路径/accept.json` 换成本机路径即可。`t
 
 ## 部署上的取舍
 
-这个系统的调用方就是旁边那个一次性 client，没有第二个需要从宿主机直连的人。所以 compose 把两个容器放进 `internal: true` 的网络，client 访问 `http://server:8080`，compose 文件里没有 `ports`。
+容器之间走 `internal: true` 的网络，client 访问 `http://server:8080`。宿主机额外绑定 `127.0.0.1:8080`，只给本机的 curl 和调试用，不监听局域网地址。
 
 client 使用 `depends_on.condition: service_healthy`。健康检查命令是容器内的静态二进制去请求 `GET /health`，`/health` 在 `rules_loaded` 为 0 时返回 503。这样避开的是「端口已经打开但规则还没装进内存」这种假就绪。
 
@@ -126,14 +133,12 @@ client 使用 `depends_on.condition: service_healthy`。健康检查命令是容
 
 规则文件在构建时复制到 `/rules/fingerprints.json`，由 `RULES_PATH` 指给进程。换一份规则是换数据文件，不是改匹配引擎。
 
-## 本地开发
+## 本地检查
 
-本机需要 Go 1.22 或更高版本。在仓库根目录：
+本机需要 Go 1.22 或更高版本。
 
 ```bash
+go fmt ./...
+go vet ./...
 go test ./...
-go run ./cmd/server
-go run ./cmd/client -input testdata/sample.json -server http://127.0.0.1:8080
 ```
-
-client 把 JSON 打到标准输出，把「共几条、未知几条」打到标准错误。结果里含有 `unknown` 时退出码仍是 0。文件读不到、服务连不上或服务返回 4xx/5xx 时退出码是 2。

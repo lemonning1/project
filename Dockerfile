@@ -37,9 +37,9 @@ FROM scratch AS client
 
 COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /out/client /client
-COPY testdata/sample.json /data/sample.json
+COPY testdata/input.json /data/input.json
 
 USER 65532:65532
 ENV FINGERPRINT_SERVER=http://server:8080 \
-    FINGERPRINT_INPUT=/data/sample.json
+    FINGERPRINT_INPUT=/data/input.json
 ENTRYPOINT ["/client"]

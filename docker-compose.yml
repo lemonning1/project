@@ -1,5 +1,6 @@
 # server 是唯一常驻进程，client 是一次性任务。
-# 两者只走名为 app 的内部网络，用服务名访问，不把端口发布到宿主机。
+# 容器之间只走内部网络，用服务名访问。
+# 宿主机只绑定 127.0.0.1:8080，供本机 curl 检查，不向局域网开放。
 name: banner-fingerprint
 
 networks:
@@ -18,8 +19,8 @@ services:
       RULES_PATH: /rules/fingerprints.json
     networks:
       - app
-    expose:
-      - "8080"
+    ports:
+      - "127.0.0.1:8080:8080"
     read_only: true
     cap_drop:
       - ALL
@@ -45,7 +46,7 @@ services:
     image: banner-fingerprint-client:local
     environment:
       FINGERPRINT_SERVER: http://server:8080
-      FINGERPRINT_INPUT: /data/sample.json
+      FINGERPRINT_INPUT: /data/input.json
     networks:
       - app
     depends_on:
